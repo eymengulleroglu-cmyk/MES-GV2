@@ -8,7 +8,7 @@ export default function Settings() {
   const queryClient = useQueryClient();
 
   const reset = () => {
-    if (confirm("Tüm demo verileri sıfırlansın mı?")) {
+    if (confirm("Tüm kayıtlar silinsin mi?")) {
       store.reset();
       Object.keys(localStorage).forEach((k) => {
         if (k.startsWith("mesg-")) localStorage.removeItem(k);
@@ -22,7 +22,7 @@ export default function Settings() {
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold">Ayarlar</h1>
-        <p className="text-muted text-sm">Tema ve demo verisi yönetimi</p>
+        <p className="text-muted text-sm">Tema ve veri yönetimi</p>
       </div>
 
       <div className="card p-4 space-y-3">
@@ -38,10 +38,10 @@ export default function Settings() {
       </div>
 
       <div className="card p-4 space-y-3">
-        <h2 className="font-semibold">Demo Verisi</h2>
-        <p className="text-sm text-muted">Tüm veriler sentetik demodur. Sıfırlama orijinal demo verisini geri yükler.</p>
+        <h2 className="font-semibold">Veri Yönetimi</h2>
+        <p className="text-sm text-muted">Sıfırlama tüm kayıtları siler ve sistemi başlangıç senaryosuna döndürür.</p>
         <button onClick={reset} className="btn-danger">
-          <RotateCcw size={14} /> Demo Verisini Sıfırla
+          <RotateCcw size={14} /> Verileri Sıfırla
         </button>
       </div>
     </div>

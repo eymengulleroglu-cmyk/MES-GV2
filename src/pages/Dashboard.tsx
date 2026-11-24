@@ -284,7 +284,7 @@ export default function Dashboard() {
           <Logo size={128} />
           <div>
             <h1 className="text-2xl font-bold">Pano</h1>
-            <p className="text-muted text-sm">Özelleştirilebilir dashboard (sentetik demo verisi)</p>
+            <p className="text-muted text-sm">Özelleştirilebilir üretim panosu</p>
           </div>
         </div>
         <button onClick={() => setEditMode((v) => !v)} className="btn-ghost">

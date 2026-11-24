@@ -4,11 +4,12 @@ import type {
   DowntimeRecord,
   ScrapRecord,
   WorkOrderStatus,
+  WorkOrderPriority,
   DowntimeReason,
   ScrapReason,
 } from "./types";
 
-const STORAGE_KEY = "mesg-demo-data-v3";
+const STORAGE_KEY = "mesg-data-v7";
 
 interface DemoData {
   workCenters: WorkCenter[];
@@ -18,45 +19,90 @@ interface DemoData {
 }
 
 function seed(): DemoData {
-  const now = new Date();
   const iso = (d: Date) => d.toISOString();
-  const days = (n: number) => {
-    const d = new Date(now);
-    d.setDate(d.getDate() + n);
-    return d.toISOString().slice(0, 10);
-  };
 
   const workCenters: WorkCenter[] = [
-    { id: "wc-1", code: "CNC-1", name: "CNC Torna Hattı", status: "Üretimde", activeWorkOrderId: "wo-1" },
-    { id: "wc-2", code: "CNC-2", name: "CNC Freze Hattı", status: "Üretimde", activeWorkOrderId: "wo-2" },
-    { id: "wc-3", code: "PRES-A", name: "Pres Hattı A", status: "Üretimde", activeWorkOrderId: "wo-4" },
-    { id: "wc-4", code: "KYN-1", name: "Kaynak Robot Hattı", status: "Üretimde", activeWorkOrderId: "wo-5" },
-    { id: "wc-5", code: "BOYA-1", name: "Boya Hattı", status: "Boşta", activeWorkOrderId: null },
-    { id: "wc-6", code: "MONT-1", name: "Montaj Hattı", status: "Boşta", activeWorkOrderId: null },
-    { id: "wc-7", code: "PAK-1", name: "Paketleme Hattı", status: "Boşta", activeWorkOrderId: null },
+    { id: "wc-1", code: "CNC-001", name: "CNC Torna 1", status: "Üretimde", activeWorkOrderId: "wo-1" },
+    { id: "wc-2", code: "CNC-002", name: "CNC Torna 2", status: "Üretimde", activeWorkOrderId: "wo-2" },
+    { id: "wc-3", code: "CNC-003", name: "CNC Dik İşleme Merkezi", status: "Boşta", activeWorkOrderId: null },
+    { id: "wc-4", code: "CNC-004", name: "CNC Freze", status: "Boşta", activeWorkOrderId: null },
+    { id: "wc-5", code: "PRS-001", name: "Hidrolik Pres 200 Ton", status: "Üretimde", activeWorkOrderId: "wo-3" },
+    { id: "wc-6", code: "KYN-001", name: "Robotik Kaynak İstasyonu", status: "Boşta", activeWorkOrderId: null },
+    { id: "wc-7", code: "MON-001", name: "Montaj Hattı", status: "Boşta", activeWorkOrderId: null },
+    { id: "wc-8", code: "KLT-001", name: "Kalite Kontrol İstasyonu", status: "Boşta", activeWorkOrderId: null },
+    { id: "wc-9", code: "PAK-001", name: "Paketleme İstasyonu", status: "Boşta", activeWorkOrderId: null },
   ];
 
-  const workOrders: WorkOrder[] = [
-    { id: "wo-1", code: "WO-1001", productName: "Piston P-200", workCenterId: "wc-1", targetQty: 500, producedQty: 320, status: "Üretimde", priority: "Yüksek", dueDate: days(2), createdAt: iso(new Date(now.getTime() - 86400000)) },
-    { id: "wo-2", code: "WO-1002", productName: "Fren Diski FD-300", workCenterId: "wc-2", targetQty: 300, producedQty: 180, status: "Üretimde", priority: "Normal", dueDate: days(1), createdAt: iso(new Date(now.getTime() - 172800000)) },
-    { id: "wo-3", code: "WO-1003", productName: "Şanzıman Dişlisi SD-150", workCenterId: null, targetQty: 800, producedQty: 0, status: "Planlandı", priority: "Normal", dueDate: days(5), createdAt: iso(new Date(now.getTime() - 43200000)) },
-    { id: "wo-4", code: "WO-1004", productName: "Kapı Paneli KP-400", workCenterId: "wc-3", targetQty: 200, producedQty: 120, status: "Üretimde", priority: "Düşük", dueDate: days(7), createdAt: iso(new Date(now.getTime() - 21600000)) },
-    { id: "wo-5", code: "WO-1005", productName: "Egzoz Susturucusu ES-100", workCenterId: "wc-4", targetQty: 150, producedQty: 60, status: "Üretimde", priority: "Acil", dueDate: days(0), createdAt: iso(new Date(now.getTime() - 259200000)) },
-    { id: "wo-6", code: "WO-1006", productName: "Motor Bloğu MB-500", workCenterId: "wc-2", targetQty: 100, producedQty: 100, status: "Tamamlandı", priority: "Normal", dueDate: days(-1), createdAt: iso(new Date(now.getTime() - 604800000)) },
-    { id: "wo-7", code: "WO-1007", productName: "Süspansiyon Kolu SK-220", workCenterId: "wc-3", targetQty: 400, producedQty: 400, status: "Tamamlandı", priority: "Normal", dueDate: days(-2), createdAt: iso(new Date(now.getTime() - 691200000)) },
-    { id: "wo-8", code: "WO-1008", productName: "Far Çerçevesi FC-80", workCenterId: null, targetQty: 600, producedQty: 0, status: "Planlandı", priority: "Yüksek", dueDate: days(3), createdAt: iso(new Date(now.getTime() - 10800000)) },
+  const wcId = (code: string) => workCenters.find((w) => w.code === code)?.id ?? null;
+
+  //ürün rotasyonları (iş emri -> kullanılan iş merkezleri sırası)
+  const routing = (productCode: string): string[] => {
+    switch (productCode) {
+      case "URN-001": return ["CNC-001", "CNC-003", "KLT-001", "PAK-001"];
+      case "URN-002": return ["CNC-002", "CNC-004", "KLT-001", "PAK-001"];
+      case "URN-003": return ["PRS-001", "KYN-001", "KLT-001", "PAK-001"];
+      case "URN-004": return ["CNC-003", "CNC-004", "KLT-001", "PAK-001"];
+      case "URN-005": return ["CNC-001", "CNC-003", "MON-001", "KLT-001", "PAK-001"];
+      default: return [];
+    }
+  };
+
+  const raw: [string, string, string, number, string, WorkOrderPriority, number, WorkOrderStatus][] = [
+    ["IE-2026-001", "URN-001", "Flanş Bağlantı Parçası", 2000, "2026-12-02", "Yüksek", 1210, "Üretimde"],
+    ["IE-2026-002", "URN-002", "Çelik Mil 25 mm", 1500, "2026-12-03", "Normal", 970, "Üretimde"],
+    ["IE-2026-003", "URN-003", "Motor Bağlantı Braketi", 1200, "2026-12-04", "Yüksek", 790, "Üretimde"],
+    ["IE-2026-004", "URN-004", "Alüminyum Gövde", 800, "2026-12-05", "Normal", 0, "Planlandı"],
+    ["IE-2026-005", "URN-005", "Rulman Yatağı", 1000, "2026-12-06", "Normal", 860, "Üretimde"],
+    ["IE-2026-006", "URN-002", "Çelik Mil 25 mm", 2500, "2026-12-08", "Yüksek", 0, "Planlandı"],
+    ["IE-2026-007", "URN-001", "Flanş Bağlantı Parçası", 1800, "2026-12-09", "Normal", 0, "Planlandı"],
+    ["IE-2026-008", "URN-003", "Motor Bağlantı Braketi", 1500, "2026-12-10", "Kritik", 0, "Planlandı"],
+    ["IE-2026-009", "URN-004", "Alüminyum Gövde", 1000, "2026-12-11", "Normal", 0, "Planlandı"],
+    ["IE-2026-010", "URN-005", "Rulman Yatağı", 1600, "2026-12-12", "Yüksek", 0, "Planlandı"],
+    ["IE-2026-011", "URN-001", "Flanş Bağlantı Parçası", 3000, "2026-12-14", "Normal", 0, "Planlandı"],
+    ["IE-2026-012", "URN-002", "Çelik Mil 25 mm", 1200, "2026-12-15", "Normal", 0, "Planlandı"],
+    ["IE-2026-013", "URN-003", "Motor Bağlantı Braketi", 2000, "2026-12-16", "Yüksek", 0, "Planlandı"],
+    ["IE-2026-014", "URN-004", "Alüminyum Gövde", 1400, "2026-12-17", "Normal", 0, "Planlandı"],
+    ["IE-2026-015", "URN-005", "Rulman Yatağı", 2200, "2026-12-18", "Kritik", 0, "Planlandı"],
   ];
 
+  const workOrders: WorkOrder[] = raw.map(([code, productCode, productName, targetQty, dueDate, priority, producedQty, status], i) => ({
+    id: "wo-" + (i + 1),
+    code,
+    productName,
+    productCode,
+    routing: routing(productCode),
+    workCenterId: wcId(routing(productCode)[0] ?? ""),
+    targetQty,
+    producedQty,
+    status,
+    priority,
+    dueDate,
+    createdAt: iso(new Date("2026-11-18T08:00:00")),
+  }));
+
+  // Arıza Raporu'ndan türetilmiş duruş kayıtları: 8 arıza, toplam 265 dk
   const downtimes: DowntimeRecord[] = [
-    { id: "dt-1", workCenterId: "wc-5", workOrderId: null, reason: "Planlı bakım", startedAt: iso(new Date(now.getTime() - 3600000)), endedAt: null },
-    { id: "dt-2", workCenterId: "wc-1", workOrderId: "wo-1", reason: "Malzeme bekleniyor", startedAt: iso(new Date(now.getTime() - 86400000)), endedAt: iso(new Date(now.getTime() - 82800000)) },
-    { id: "dt-3", workCenterId: "wc-4", workOrderId: "wo-5", reason: "Araç arızası", startedAt: iso(new Date(now.getTime() - 172800000)), endedAt: iso(new Date(now.getTime() - 169200000)) },
+    { id: "dt-seed-1", workCenterId: "wc-1", workOrderId: "wo-1", reason: "Takım kırılması", startedAt: iso(new Date("2026-11-24T08:40:00")), endedAt: iso(new Date("2026-11-24T09:13:00")) },
+    { id: "dt-seed-2", workCenterId: "wc-1", workOrderId: "wo-1", reason: "Takım kırılması", startedAt: iso(new Date("2026-11-24T13:20:00")), endedAt: iso(new Date("2026-11-24T13:52:00")) },
+    { id: "dt-seed-3", workCenterId: "wc-2", workOrderId: "wo-2", reason: "Motor aşırı ısınması", startedAt: iso(new Date("2026-11-24T10:05:00")), endedAt: iso(new Date("2026-11-24T10:40:00")) },
+    { id: "dt-seed-4", workCenterId: "wc-3", workOrderId: "wo-4", reason: "Soğutma sıvısı sistemi arızası", startedAt: iso(new Date("2026-11-24T15:10:00")), endedAt: iso(new Date("2026-11-24T16:00:00")) },
+    { id: "dt-seed-5", workCenterId: "wc-4", workOrderId: "wo-2", reason: "Rulman aşınması", startedAt: iso(new Date("2026-11-25T09:30:00")), endedAt: iso(new Date("2026-11-25T10:10:00")) },
+    { id: "dt-seed-6", workCenterId: "wc-5", workOrderId: "wo-3", reason: "Hidrolik basınç düşmesi", startedAt: iso(new Date("2026-11-25T11:00:00")), endedAt: iso(new Date("2026-11-25T11:30:00")) },
+    { id: "dt-seed-7", workCenterId: "wc-7", workOrderId: "wo-5", reason: "Konveyör sıkışması", startedAt: iso(new Date("2026-11-25T14:15:00")), endedAt: iso(new Date("2026-11-25T14:40:00")) },
+    { id: "dt-seed-8", workCenterId: "wc-9", workOrderId: "wo-1", reason: "Paketleme mekanizması arızası", startedAt: iso(new Date("2026-11-25T16:00:00")), endedAt: iso(new Date("2026-11-25T16:20:00")) },
   ];
 
+  // Verimlilik Raporu'ndan türetilmiş fire kayıtları: makine bazlı toplam 55 adet
   const scraps: ScrapRecord[] = [
-    { id: "sc-1", workCenterId: "wc-1", workOrderId: "wo-1", qty: 4, reason: "Ölçü dışı", createdAt: iso(new Date(now.getTime() - 7200000)) },
-    { id: "sc-2", workCenterId: "wc-2", workOrderId: "wo-2", qty: 2, reason: "Yüzey hatası", createdAt: iso(new Date(now.getTime() - 14400000)) },
-    { id: "sc-3", workCenterId: "wc-4", workOrderId: "wo-5", qty: 1, reason: "Malzeme hatası", createdAt: iso(new Date(now.getTime() - 18000000)) },
+    { id: "sc-seed-1", workCenterId: "wc-1", workOrderId: "wo-1", qty: 12, reason: "Ölçü Dışı", createdAt: iso(new Date("2026-11-24T11:00:00")) },
+    { id: "sc-seed-2", workCenterId: "wc-2", workOrderId: "wo-2", qty: 8, reason: "Yüzey Hatası", createdAt: iso(new Date("2026-11-24T12:30:00")) },
+    { id: "sc-seed-3", workCenterId: "wc-3", workOrderId: "wo-4", qty: 7, reason: "Çapak", createdAt: iso(new Date("2026-11-24T16:30:00")) },
+    { id: "sc-seed-4", workCenterId: "wc-4", workOrderId: "wo-2", qty: 6, reason: "Ölçü Dışı", createdAt: iso(new Date("2026-11-25T10:30:00")) },
+    { id: "sc-seed-5", workCenterId: "wc-5", workOrderId: "wo-3", qty: 8, reason: "Yüzey Hatası", createdAt: iso(new Date("2026-11-25T12:00:00")) },
+    { id: "sc-seed-6", workCenterId: "wc-6", workOrderId: "wo-3", qty: 5, reason: "Kaynak Hatası", createdAt: iso(new Date("2026-11-25T13:00:00")) },
+    { id: "sc-seed-7", workCenterId: "wc-7", workOrderId: "wo-5", qty: 4, reason: "Montaj Hatası", createdAt: iso(new Date("2026-11-25T15:00:00")) },
+    { id: "sc-seed-8", workCenterId: "wc-8", workOrderId: "wo-1", qty: 2, reason: "Görsel Hata", createdAt: iso(new Date("2026-11-25T15:30:00")) },
+    { id: "sc-seed-9", workCenterId: "wc-9", workOrderId: "wo-1", qty: 3, reason: "Eksik İşlem", createdAt: iso(new Date("2026-11-25T16:40:00")) },
   ];
 
   return { workCenters, workOrders, downtimes, scraps };

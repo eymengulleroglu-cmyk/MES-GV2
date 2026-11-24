@@ -50,6 +50,7 @@ function buildIndex(): SearchItem[] {
     "kullanicilar": "/yonetim/kullanicilar",
     "yetkiler": "/yonetim/yetkiler",
     "siparisler": "/siparisler",
+    "urunler": "/urunler",
   };
   return items.map((it) => {
     // fix path for module keys

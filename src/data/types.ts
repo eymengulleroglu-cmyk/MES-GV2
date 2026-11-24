@@ -1,10 +1,12 @@
 export type WorkOrderStatus = "Planlandı" | "Üretimde" | "Tamamlandı" | "İptal";
-export type WorkOrderPriority = "Düşük" | "Normal" | "Yüksek" | "Acil";
+export type WorkOrderPriority = "Düşük" | "Normal" | "Yüksek" | "Acil" | "Kritik";
 
 export interface WorkOrder {
   id: string;
   code: string;
   productName: string;
+  productCode?: string;
+  routing?: string[]; // iş merkezi kodu sırası (rotasyon)
   workCenterId: string | null;
   targetQty: number;
   producedQty: number;
@@ -22,8 +24,8 @@ export interface WorkCenter {
   activeWorkOrderId: string | null;
 }
 
-export type DowntimeReason = "Malzeme bekleniyor" | "Araç arızası" | "Planlı bakım" | "Operatör bekliyor" | "Diğer";
-export type ScrapReason = "Ölçü dışı" | "Yüzey hatası" | "Malzeme hatası" | "Montaj hatası" | "Diğer";
+export type DowntimeReason = string; // Arıza Nedenleri modülündeki nedenler (ör. "Takım kırılması")
+export type ScrapReason = string; // Hata Türleri modülündeki nedenler (ör. "Ölçü Dışı")
 
 export interface DowntimeRecord {
   id: string;

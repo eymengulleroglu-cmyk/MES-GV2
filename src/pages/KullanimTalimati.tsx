@@ -119,18 +119,18 @@ export default function KullanimTalimati() {
 
       <Section title="9. Veri ve Demo">
         <ul className="list-disc pl-5 space-y-1 text-sm">
-          <li>Tüm veriler sentetik demodur; gerçek şirket/müşteri/tedarikçi verisi kullanılmaz.</li>
-          <li>Ayarlar → <strong>Demo Verisini Sıfırla</strong> ile tüm veriler orijinal demo haline döner.</li>
+          <li>Sistem, örnek üretim senaryosu verileriyle başlar; tüm kayıtlar eklenebilir, düzenlenebilir ve silinebilir.</li>
           <li>İş Merkezleri, İş Emirleri ve Modül verileri tarayıcıda (localStorage) saklanır.</li>
+          <li>Ayarlar → <strong>Verileri Sıfırla</strong> ile başlangıç senaryosuna dönülür.</li>
           <li>Renk skalası: yüzde/verim/OEE (yüksek daha iyi) ve duruş/fire/hata (düşük daha iyi) değerleri renkli gösterilir.</li>
         </ul>
       </Section>
 
       <Section title="10. Modüller">
         <ul className="list-disc pl-5 space-y-1 text-sm">
-          <li><strong>Üretim:</strong> Siparişler, İş Emirleri, Üretim Girişi, Üretim Takibi</li>
-          <li><strong>Makine:</strong> İş Merkezleri, Makine Listesi, Arızalar, Bakım Planları, OEE</li>
-          <li><strong>Kalite:</strong> Kalite Kontrol, Hata Kayıtları, SPC</li>
+          <li><strong>Üretim:</strong> Siparişler, Ürünler, İş Emirleri, Üretim Girişi, Üretim Takibi</li>
+          <li><strong>Makine:</strong> İş Merkezleri, Makine Listesi, Arıza Nedenleri, Bakım Planları, OEE, Duruş &amp; Fire</li>
+          <li><strong>Kalite:</strong> Kontrol Parametreleri, Hata Türleri, SPC</li>
           <li><strong>Stok:</strong> Hammadde, Yarı Mamul, Mamul</li>
           <li><strong>İzlenebilirlik:</strong> Lot Takibi, Seri No Takibi</li>
           <li><strong>Raporlar:</strong> Üretim, Verimlilik, Arıza, Kalite</li>

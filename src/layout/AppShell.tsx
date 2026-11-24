@@ -10,9 +10,9 @@ const sections = [
   {
     title: "1. Kısım — Üretim & Kalite",
     groups: [
-      { title: "Üretim", items: [ { to: "/siparisler", label: "Siparişler" }, { to: "/emirler", label: "İş Emirleri" }, { to: "/uretim/uretim-girisi", label: "Üretim Girişi" }, { to: "/uretim/uretim-takibi", label: "Üretim Takibi" } ] },
-      { title: "Makine", items: [ { to: "/is-merkezleri", label: "İş Merkezleri" }, { to: "/makine/liste", label: "Makine Listesi" }, { to: "/makine/arizalar", label: "Arızalar" }, { to: "/makine/bakim", label: "Bakım Planları" }, { to: "/makine/oee", label: "OEE" } ] },
-      { title: "Kalite", items: [ { to: "/kalite/kontrol", label: "Kalite Kontrol" }, { to: "/kalite/hata", label: "Hata Kayıtları" }, { to: "/kalite/spc", label: "SPC" } ] },
+      { title: "Üretim", items: [ { to: "/siparisler", label: "Siparişler" }, { to: "/urunler", label: "Ürünler" }, { to: "/emirler", label: "İş Emirleri" }, { to: "/uretim/uretim-girisi", label: "Üretim Girişi" }, { to: "/uretim/uretim-takibi", label: "Üretim Takibi" } ] },
+      { title: "Makine", items: [ { to: "/is-merkezleri", label: "İş Merkezleri" }, { to: "/makine/liste", label: "Makine Listesi" }, { to: "/makine/arizalar", label: "Arıza Nedenleri" }, { to: "/makine/bakim", label: "Bakım Planları" }, { to: "/makine/oee", label: "OEE" }, { to: "/durus-fire", label: "Duruş & Fire" } ] },
+      { title: "Kalite", items: [ { to: "/kalite/kontrol", label: "Kontrol Parametreleri" }, { to: "/kalite/hata", label: "Hata Türleri" }, { to: "/kalite/spc", label: "SPC" } ] },
     ],
   },
   {

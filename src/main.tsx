@@ -39,6 +39,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="modul/:key" element={<ModulePage />} />
 
               <Route path="siparisler" element={<ModuleCrud moduleKey="siparisler" />} />
+              <Route path="urunler" element={<ModuleCrud moduleKey="urunler" />} />
               <Route path="uretim/is-emirleri" element={<WorkOrders />} />
               <Route path="uretim/uretim-girisi" element={<ModuleCrud moduleKey="uretim-girisi" />} />
               <Route path="uretim/uretim-takibi" element={<ModuleCrud moduleKey="uretim-takibi" />} />

@@ -99,7 +99,7 @@ export default function WorkOrders() {
             <input className="input" placeholder="Ürün adı" value={form.productName} onChange={(e) => setForm({ ...form, productName: e.target.value })} />
             <input className="input" type="number" placeholder="Hedef adet" value={form.targetQty} onChange={(e) => setForm({ ...form, targetQty: Number(e.target.value) })} />
             <select className="input" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
-              <option>Düşük</option><option>Normal</option><option>Yüksek</option><option>Acil</option>
+              <option>Düşük</option><option>Normal</option><option>Yüksek</option><option>Acil</option><option>Kritik</option>
             </select>
             <input className="input" type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
             <select className="input" value={form.workCenterId} onChange={(e) => setForm({ ...form, workCenterId: e.target.value })}>
@@ -125,7 +125,7 @@ export default function WorkOrders() {
             <input className="input" placeholder="Ürün adı" value={form.productName} onChange={(e) => setForm({ ...form, productName: e.target.value })} />
             <input className="input" type="number" placeholder="Hedef adet" value={form.targetQty} onChange={(e) => setForm({ ...form, targetQty: Number(e.target.value) })} />
             <select className="input" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
-              <option>Düşük</option><option>Normal</option><option>Yüksek</option><option>Acil</option>
+              <option>Düşük</option><option>Normal</option><option>Yüksek</option><option>Acil</option><option>Kritik</option>
             </select>
             <input className="input" type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
             <select className="input" value={form.workCenterId} onChange={(e) => setForm({ ...form, workCenterId: e.target.value })}>
@@ -201,8 +201,10 @@ export default function WorkOrders() {
             <div className="space-y-2">
               {[
                 ["Emir No", detail.code],
+                ["Ürün Kodu", detail.productCode ?? "—"],
                 ["Ürün", detail.productName],
                 ["İş Merkezi", workCenters.find((w) => w.id === detail.workCenterId)?.code ?? "—"],
+                ["Rota", (detail.routing ?? []).join(" → ") || "—"],
                 ["Hedef", detail.targetQty],
                 ["Üretilen", detail.producedQty],
                 ["Öncelik", detail.priority],

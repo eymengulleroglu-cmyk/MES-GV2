@@ -4,18 +4,24 @@ import { Plus, Trash2, Pencil, ArrowUpDown } from "lucide-react";
 
 type SortDir = "asc" | "desc";
 
+/** Sayıları Türkçe biçimde göster (2.000 / 78,5) */
+function fmt(v: any): string {
+  if (typeof v === "number") return v.toLocaleString("tr-TR", { maximumFractionDigits: 2 });
+  return String(v ?? "");
+}
+
 function statusColor(val: any): string {
   const v = String(val).toLowerCase();
-  if (v.includes("tamam") || v.includes("uygun") || v.includes("aktif") || v.includes("açık") || v.includes("kontrolde")) return "var(--success)";
+  if (v.includes("tamam") || v.includes("uygun") || v.includes("aktif") || v.includes("açık") || v.includes("kontrolde") || v.includes("onaylandı") || v.includes("kontrol alt") || v.includes("evet")) return "var(--success)";
   if (v.includes("üretimde") || v.includes("normal") || v.includes("orta")) return "var(--accent)";
-  if (v.includes("duruş") || v.includes("uyarı") || v.includes("planlı")) return "var(--warning)";
-  if (v.includes("iptal") || v.includes("hata") || v.includes("yüksek") || v.includes("değil")) return "var(--danger)";
+  if (v.includes("duruş") || v.includes("uyarı") || v.includes("planlı") || v.includes("planlandı") || v.includes("bekliyor") || v.includes("kalite kontrol")) return "var(--warning)";
+  if (v.includes("iptal") || v.includes("hata") || v.includes("yüksek") || v.includes("değil") || v.includes("hayır")) return "var(--danger)";
   return "var(--text-muted)";
 }
 
 function isStatusKey(key: string) {
   const k = key.toLowerCase();
-  return k.includes("status") || k.includes("durum") || k.includes("result") || k.includes("sonuç") || k.includes("severity") || k.includes("şiddet") || k.includes("priority") || k.includes("öncelik");
+  return k.includes("status") || k.includes("durum") || k.includes("result") || k.includes("sonuç") || k.includes("severity") || k.includes("şiddet") || k.includes("priority") || k.includes("öncelik") || k.includes("read") || k.includes("write") || k.includes("okuma") || k.includes("yazma");
 }
 
 function isHigherBetter(key: string) {
@@ -25,7 +31,7 @@ function isHigherBetter(key: string) {
 
 function isLowerBetter(key: string) {
   const k = key.toLowerCase();
-  return k.includes("downtime") || k.includes("duruş") || k.includes("scrap") || k.includes("fire") || k.includes("defect") || k.includes("hata") || k.includes("ppm") || k.includes("mttr");
+  return k.includes("downtime") || k.includes("duruş") || k.includes("scrap") || k.includes("fire") || k.includes("defect") || k.includes("hata") || k.includes("ppm") || k.includes("mttr") || k.includes("count") || k.includes("sayı");
 }
 
 function numericColor(key: string, val: any): string {
@@ -50,7 +56,7 @@ function numericColor(key: string, val: any): string {
 
 export default function ModuleCrud({ moduleKey }: { moduleKey: string }) {
   const cfg = MODULES[moduleKey];
-  const storageKey = "mesg-mod-v4-" + moduleKey;
+  const storageKey = "mesg-mod-v8-" + moduleKey;
 
   const [rows, setRows] = useState<any[]>(() => {
     try {
@@ -205,11 +211,11 @@ export default function ModuleCrud({ moduleKey }: { moduleKey: string }) {
                     {cfg.columns.map((c) => (
                       <td key={c.key} className="p-3">
                         {isStatusKey(c.key) ? (
-                          <span className="text-xs font-semibold px-2 py-1 rounded-full" style={{ backgroundColor: "var(--surface-2)", color: statusColor(r[c.key]) }}>{String(r[c.key] ?? "")}</span>
+                          <span className="text-xs font-semibold px-2 py-1 rounded-full" style={{ backgroundColor: "var(--surface-2)", color: statusColor(r[c.key]) }}>{fmt(r[c.key])}</span>
                         ) : (isHigherBetter(c.key) || isLowerBetter(c.key)) ? (
-                          <span className="font-semibold" style={{ color: numericColor(c.key, r[c.key]) }}>{String(r[c.key] ?? "")}</span>
+                          <span className="font-semibold" style={{ color: numericColor(c.key, r[c.key]) }}>{fmt(r[c.key])}</span>
                         ) : (
-                          String(r[c.key] ?? "")
+                          fmt(r[c.key])
                         )}
                       </td>
                     ))}
@@ -235,9 +241,9 @@ export default function ModuleCrud({ moduleKey }: { moduleKey: string }) {
                 <div key={c.key} className="flex justify-between border-b py-1 text-sm" style={{ borderColor: "var(--border)" }}>
                   <span className="text-muted">{c.label}</span>
                   {isStatusKey(c.key) ? (
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: "var(--surface-2)", color: statusColor(r[c.key]) }}>{String(r[c.key] ?? "")}</span>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: "var(--surface-2)", color: statusColor(r[c.key]) }}>{fmt(r[c.key])}</span>
                   ) : (
-                    <span className="font-medium">{String(r[c.key] ?? "")}</span>
+                    <span className="font-medium">{fmt(r[c.key])}</span>
                   )}
                 </div>
               ))}
@@ -259,7 +265,7 @@ export default function ModuleCrud({ moduleKey }: { moduleKey: string }) {
               {cfg.columns.map((c) => (
                 <div key={c.key} className="flex justify-between border-b pb-1" style={{ borderColor: "var(--border)" }}>
                   <span className="text-muted text-sm">{c.label}</span>
-                  <span className="text-sm font-medium" style={{ color: isStatusKey(c.key) ? statusColor(detail[c.key]) : (isHigherBetter(c.key) || isLowerBetter(c.key)) ? numericColor(c.key, detail[c.key]) : "var(--text)" }}>{String(detail[c.key] ?? "")}</span>
+                  <span className="text-sm font-medium" style={{ color: isStatusKey(c.key) ? statusColor(detail[c.key]) : (isHigherBetter(c.key) || isLowerBetter(c.key)) ? numericColor(c.key, detail[c.key]) : "var(--text)" }}>{fmt(detail[c.key])}</span>
                 </div>
               ))}
             </div>
@@ -278,7 +284,7 @@ export default function ModuleCrud({ moduleKey }: { moduleKey: string }) {
               <div className="space-y-1">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted">OEE</span>
-                  <span className="font-medium">{detail.oee}%</span>
+                  <span className="font-medium">{fmt(detail.oee)}%</span>
                 </div>
                 <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: "var(--surface-2)" }}>
                   <div className="h-full rounded-full" style={{ width: detail.oee + "%", backgroundColor: "var(--accent)" }} />
@@ -289,7 +295,7 @@ export default function ModuleCrud({ moduleKey }: { moduleKey: string }) {
               <div className="space-y-1">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted">Verim</span>
-                  <span className="font-medium">{detail.efficiency}%</span>
+                  <span className="font-medium">{fmt(detail.efficiency)}%</span>
                 </div>
                 <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: "var(--surface-2)" }}>
                   <div className="h-full rounded-full" style={{ width: detail.efficiency + "%", backgroundColor: "var(--accent)" }} />
