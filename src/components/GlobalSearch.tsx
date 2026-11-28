@@ -10,11 +10,20 @@ interface SearchItem {
   path: string;
 }
 
+/** Modül satırlarını CANLI okur: sonradan eklenen/düzenlenen/silinen kayıtlar da aramada çıkar. */
+function liveRows(moduleKey: string, cfg: (typeof MODULES)[string]) {
+  try {
+    const raw = localStorage.getItem("mesg-mod-v8-" + moduleKey);
+    if (raw) return JSON.parse(raw) as Record<string, unknown>[];
+  } catch { /* yoksay */ }
+  return cfg.rows;
+}
+
 function buildIndex(): SearchItem[] {
   const items: SearchItem[] = [];
-  // modules
+  // modules (canlı localStorage verisiyle)
   Object.entries(MODULES).forEach(([key, cfg]) => {
-    cfg.rows.forEach((r) => {
+    liveRows(key, cfg).forEach((r) => {
       const vals = cfg.columns.map((c) => String(r[c.key] ?? "")).join(" ");
       items.push({ label: vals.split(" ")[0] || cfg.title, sub: cfg.title + " — " + vals, path: "/modul/" + key });
     });
@@ -27,6 +36,14 @@ function buildIndex(): SearchItem[] {
   store.getWorkCenters().forEach((wc) => {
     items.push({ label: wc.code, sub: "İş Merkezi — " + wc.name + " (" + wc.status + ")", path: "/is-merkezleri" });
   });
+  // özel sayfalar (ProManage tarzı ekranlar)
+  items.push(
+    { label: "Andon Panosu", sub: "Sayfa — Canlı fabrika ekranı", path: "/andon" },
+    { label: "Olay & Alarm Merkezi", sub: "Sayfa — Alarm onay ekranı", path: "/alarmlar" },
+    { label: "Üretim Planlama", sub: "Sayfa — Siparişten iş emrine", path: "/planlama" },
+    { label: "Kayıp Analizi", sub: "Sayfa — Duruş/fire Pareto", path: "/raporlar/kayip-analizi" },
+    { label: "İzlenebilirlik Sorgu", sub: "Sayfa — Lot/SN izleme", path: "/izlenebilirlik/sorgu" },
+  );
   // map module key routes
   const routeMap: Record<string, string> = {
     "uretim-girisi": "/uretim/uretim-girisi",
@@ -36,9 +53,11 @@ function buildIndex(): SearchItem[] {
     "bakim": "/makine/bakim",
     "oee": "/makine/oee",
     "kalite-kontrol": "/kalite/kontrol",
+    "kalite-olcumler": "/kalite/olcumler",
     "hata-kayitlari": "/kalite/hata",
     "spc": "/kalite/spc",
     "hammadde": "/stok/hammadde",
+    "stok-hareketleri": "/stok/hareketler",
     "yari-mamul": "/stok/yari-mamul",
     "mamul": "/stok/mamul",
     "lot-takibi": "/izlenebilirlik/lot",
@@ -48,9 +67,13 @@ function buildIndex(): SearchItem[] {
     "rapor-ariza": "/raporlar/ariza",
     "rapor-kalite": "/raporlar/kalite",
     "kullanicilar": "/yonetim/kullanicilar",
+    "denetim-kaydi": "/yonetim/denetim-kaydi",
+    "musteriler": "/yonetim/musteriler",
     "yetkiler": "/yonetim/yetkiler",
     "siparisler": "/siparisler",
     "urunler": "/urunler",
+    "vardiya-plani": "/uretim/vardiya-plani",
+    "alarm-kurallari": "/yonetim/alarm-kurallari",
   };
   return items.map((it) => {
     // fix path for module keys
@@ -64,12 +87,13 @@ export default function GlobalSearch() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const navigate = useNavigate();
-  const index = useMemo(() => buildIndex(), []);
+  // Arama açıldığında yeniden dizin kur (yeni eklenen kayıtlar bulunsun)
+  const index = useMemo(() => buildIndex(), [open]);
 
   const results = useMemo(() => {
     const query = q.trim().toLowerCase();
     if (!query) return [];
-    return index.filter((it) => it.sub.toLowerCase().includes(query)).slice(0, 20);
+    return index.filter((it) => (it.label + " " + it.sub).toLowerCase().includes(query)).slice(0, 20);
   }, [q, index]);
 
   return (

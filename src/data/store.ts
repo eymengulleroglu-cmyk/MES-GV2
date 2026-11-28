@@ -140,6 +140,12 @@ export const store = {
   getWorkCenter(id: string) { return data.workCenters.find((w) => w.id === id) ?? null; },
   getWorkOrder(id: string) { return data.workOrders.find((w) => w.id === id) ?? null; },
   createWorkOrder(input: Omit<WorkOrder, "id" | "createdAt" | "producedQty" | "status"> & { status?: WorkOrderStatus }) {
+    if (!input.code || !input.productName || !input.dueDate) throw new Error("Emir no, ürün ve termin zorunludur.");
+    if (!input.targetQty || input.targetQty <= 0) throw new Error("Hedef adet 0'dan büyük olmalıdır.");
+    if (input.workCenterId) {
+      const busy = data.workOrders.find((w) => w.workCenterId === input.workCenterId && (w.status === "Üretimde" || w.status === "Planlandı"));
+      if (busy) throw new Error("Bu iş merkezinde zaten aktif bir iş emri var (" + busy.code + "). Önce onu tamamlayın veya başka makine seçin.");
+    }
     const wo: WorkOrder = {
       id: "wo-" + Date.now(),
       code: input.code,
@@ -198,6 +204,11 @@ export const store = {
   updateWorkOrder(id: string, patch: Partial<WorkOrder>) {
     const wo = data.workOrders.find((w) => w.id === id);
     if (!wo) return;
+    if (patch.workCenterId && patch.workCenterId !== wo.workCenterId) {
+      const busy = data.workOrders.find((w) => w.id !== id && w.workCenterId === patch.workCenterId && (w.status === "Üretimde" || w.status === "Planlandı"));
+      if (busy) throw new Error("Bu iş merkezinde zaten aktif bir iş emri var (" + busy.code + ").");
+    }
+    if (patch.targetQty !== undefined && patch.targetQty <= 0) throw new Error("Hedef adet 0'dan büyük olmalıdır.");
     Object.assign(wo, patch);
     save();
   },

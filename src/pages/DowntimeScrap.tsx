@@ -20,6 +20,9 @@ export default function DowntimeScrap() {
       <div>
         <h1 className="text-2xl font-bold">Duruş & Fire Kayıtları</h1>
         <p className="text-muted text-sm">Tüm duruş ve fire kayıtlarını görüntüle</p>
+        <p className="text-xs text-muted mt-1">
+          Fire oranı = fire adedi ÷ (üretilen + fire) × 100. Duruş süresi = bitiş − başlangıç (açık duruşlarda şu an).
+        </p>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">

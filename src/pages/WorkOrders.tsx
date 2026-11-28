@@ -1,7 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { store } from "../data/store";
+import { MODULES } from "../data/modules";
 import { Plus, Trash2, Pencil, ArrowUpDown } from "lucide-react";
+
+function readProducts(): { code: string; name: string }[] {
+  try {
+    const raw = localStorage.getItem("mesg-mod-v8-urunler");
+    if (raw) return JSON.parse(raw) as any[];
+  } catch { /* yoksay */ }
+  return (MODULES["urunler"]?.rows ?? []) as { code: string; name: string }[];
+}
 import { useState } from "react";
 
 const statusColor: Record<string, string> = {
@@ -24,7 +33,8 @@ export default function WorkOrders() {
   const [openCreate, setOpenCreate] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
   const [detail, setDetail] = useState<any | null>(null);
-  const [form, setForm] = useState({ code: "", productName: "", targetQty: 100, priority: "Normal", dueDate: "", workCenterId: "", status: "Planlandı" });
+  const [form, setForm] = useState({ code: "", productName: "", productCode: "", targetQty: 100, priority: "Normal", dueDate: "", workCenterId: "", status: "Planlandı" });
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const statuses = ["Tümü", "Planlandı", "Üretimde", "Tamamlandı"];
 
@@ -46,7 +56,8 @@ export default function WorkOrders() {
 
   const createMut = useMutation({
     mutationFn: async (data: any) => store.createWorkOrder({ ...data, workCenterId: data.workCenterId || null }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["workOrders"] }); setOpenCreate(false); setForm({ code: "", productName: "", targetQty: 100, priority: "Normal", dueDate: "", workCenterId: "", status: "Planlandı" }); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["workOrders"] }); setOpenCreate(false); setForm({ code: "", productName: "", productCode: "", targetQty: 100, priority: "Normal", dueDate: "", workCenterId: "", status: "Planlandı" }); setCreateError(null); },
+    onError: (e: any) => setCreateError(e?.message ?? "Kayıt oluşturulamadı."),
   });
 
   const updateMut = useMutation({
@@ -61,7 +72,7 @@ export default function WorkOrders() {
 
   const openEdit = (w: any) => {
     setEditing(w);
-    setForm({ code: w.code, productName: w.productName, targetQty: w.targetQty, priority: w.priority, dueDate: w.dueDate, workCenterId: w.workCenterId ?? "", status: w.status });
+    setForm({ code: w.code, productName: w.productName, productCode: w.productCode ?? "", targetQty: w.targetQty, priority: w.priority, dueDate: w.dueDate, workCenterId: w.workCenterId ?? "", status: w.status });
     setOpenCreate(false);
   };
 
@@ -78,14 +89,14 @@ export default function WorkOrders() {
           <h1 className="text-2xl font-bold">İş Emirleri</h1>
           <p className="text-muted text-sm">Ekleme, düzenleme, silme ve sıralama</p>
         </div>
-        <button onClick={() => { setOpenCreate(true); setEditing(null); setForm({ code: "", productName: "", targetQty: 100, priority: "Normal", dueDate: "", workCenterId: "", status: "Planlandı" }); }} className="btn-primary">
+        <button onClick={() => { setOpenCreate(true); setEditing(null); setForm({ code: "", productName: "", productCode: "", targetQty: 100, priority: "Normal", dueDate: "", workCenterId: "", status: "Planlandı" }); }} className="btn-primary">
           <Plus size={16} /> Yeni Emir
         </button>
       </div>
 
       <div className="flex gap-2 flex-wrap">
         {statuses.map((s) => (
-          <button key={s} onClick={() => setFilter(s)} className="btn-ghost !px-3 !py-1.5 text-xs" style={filter === s ? { backgroundColor: "var(--accent)", color: "#0b0e14" } : {}}>
+          <button key={s} onClick={() => setFilter(s)} className="btn-ghost !px-3 !py-1.5 text-xs" style={filter === s ? { backgroundColor: "var(--accent)", color: "var(--accent-foreground)" } : {}}>
             {s}
           </button>
         ))}
@@ -95,18 +106,24 @@ export default function WorkOrders() {
         <div className="card p-4 space-y-3">
           <h2 className="font-semibold">Yeni Üretim Emri</h2>
           <div className="grid md:grid-cols-2 gap-3">
-            <input className="input" placeholder="Emir No (WO-1009)" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} />
-            <input className="input" placeholder="Ürün adı" value={form.productName} onChange={(e) => setForm({ ...form, productName: e.target.value })} />
-            <input className="input" type="number" placeholder="Hedef adet" value={form.targetQty} onChange={(e) => setForm({ ...form, targetQty: Number(e.target.value) })} />
-            <select className="input" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
+            <input className="input" placeholder="Emir No (WO-1009)" value={form.code} onChange={(e) => setForm((prev) => ({ ...prev, code: e.target.value }))} />
+            <select className="input" value={form.productName} onChange={(e) => {
+              const p = readProducts().find((x) => x.name === e.target.value);
+              setForm((prev) => ({ ...prev, productName: e.target.value, productCode: p?.code ?? prev.productCode }));
+            }}>
+              <option value="">Ürün seç (kayıtlı)</option>
+              {readProducts().map((p) => <option key={p.code} value={p.name}>{p.code} — {p.name}</option>)}
+            </select>
+            <input className="input" type="number" placeholder="Hedef adet" value={form.targetQty} onChange={(e) => setForm((prev) => ({ ...prev, targetQty: Number(e.target.value) }))} />
+            <select className="input" value={form.priority} onChange={(e) => setForm((prev) => ({ ...prev, priority: e.target.value }))}>
               <option>Düşük</option><option>Normal</option><option>Yüksek</option><option>Acil</option><option>Kritik</option>
             </select>
-            <input className="input" type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
-            <select className="input" value={form.workCenterId} onChange={(e) => setForm({ ...form, workCenterId: e.target.value })}>
+            <input className="input" type="date" value={form.dueDate} onChange={(e) => setForm((prev) => ({ ...prev, dueDate: e.target.value }))} />
+            <select className="input" value={form.workCenterId} onChange={(e) => setForm((prev) => ({ ...prev, workCenterId: e.target.value }))}>
               <option value="">İş merkezi seç (opsiyonel)</option>
               {workCenters.map((wc) => <option key={wc.id} value={wc.id}>{wc.code} — {wc.name}</option>)}
             </select>
-            <select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+            <select className="input" value={form.status} onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value }))}>
               <option>Planlandı</option><option>Üretimde</option><option>Tamamlandı</option><option>İptal</option>
             </select>
           </div>
@@ -114,6 +131,7 @@ export default function WorkOrders() {
             <button onClick={() => createMut.mutate(form)} className="btn-primary" disabled={!form.code || !form.productName || !form.dueDate}>Kaydet</button>
             <button onClick={() => setOpenCreate(false)} className="btn-ghost">İptal</button>
           </div>
+          {createError && <div className="text-sm" style={{ color: "var(--danger)" }}>{createError}</div>}
         </div>
       )}
 
@@ -121,18 +139,24 @@ export default function WorkOrders() {
         <div className="card p-4 space-y-3">
           <h2 className="font-semibold">Düzenle — {editing.code}</h2>
           <div className="grid md:grid-cols-2 gap-3">
-            <input className="input" placeholder="Emir No" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} />
-            <input className="input" placeholder="Ürün adı" value={form.productName} onChange={(e) => setForm({ ...form, productName: e.target.value })} />
-            <input className="input" type="number" placeholder="Hedef adet" value={form.targetQty} onChange={(e) => setForm({ ...form, targetQty: Number(e.target.value) })} />
-            <select className="input" value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}>
+            <input className="input" placeholder="Emir No" value={form.code} onChange={(e) => setForm((prev) => ({ ...prev, code: e.target.value }))} />
+            <select className="input" value={form.productName} onChange={(e) => {
+              const p = readProducts().find((x) => x.name === e.target.value);
+              setForm({ ...form, productName: e.target.value, productCode: p?.code ?? form.productCode });
+            }}>
+              <option value="">Ürün seç (kayıtlı)</option>
+              {readProducts().map((p) => <option key={p.code} value={p.name}>{p.code} — {p.name}</option>)}
+            </select>
+            <input className="input" type="number" placeholder="Hedef adet" value={form.targetQty} onChange={(e) => setForm((prev) => ({ ...prev, targetQty: Number(e.target.value) }))} />
+            <select className="input" value={form.priority} onChange={(e) => setForm((prev) => ({ ...prev, priority: e.target.value }))}>
               <option>Düşük</option><option>Normal</option><option>Yüksek</option><option>Acil</option><option>Kritik</option>
             </select>
-            <input className="input" type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
-            <select className="input" value={form.workCenterId} onChange={(e) => setForm({ ...form, workCenterId: e.target.value })}>
+            <input className="input" type="date" value={form.dueDate} onChange={(e) => setForm((prev) => ({ ...prev, dueDate: e.target.value }))} />
+            <select className="input" value={form.workCenterId} onChange={(e) => setForm((prev) => ({ ...prev, workCenterId: e.target.value }))}>
               <option value="">İş merkezi seç (opsiyonel)</option>
               {workCenters.map((wc) => <option key={wc.id} value={wc.id}>{wc.code} — {wc.name}</option>)}
             </select>
-            <select className="input" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+            <select className="input" value={form.status} onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value }))}>
               <option>Planlandı</option><option>Üretimde</option><option>Tamamlandı</option><option>İptal</option>
             </select>
           </div>

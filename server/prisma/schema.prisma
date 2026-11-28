@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  code      String   @unique
+  createdAt DateTime @default(now())
+  users     User[]
+  workOrders WorkOrder[]
+  auditLogs AuditLog[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  email        String
+  passwordHash String
+  name         String
+  role         Role     @default(OPERATOR)
+  createdAt    DateTime @default(now())
+  @@unique([tenantId, email])
+}
+
+enum Role {
+  ADMIN
+  PLANNER
+  OPERATOR
+  MAINTENANCE
+  QUALITY
+}
+
+model WorkOrder {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  code         String
+  productName  String
+  productCode  String?
+  workCenterId String?
+  targetQty    Int
+  producedQty  Int      @default(0)
+  status       String   @default("Planlandı")
+  priority     String   @default("Normal")
+  dueDate      String
+  createdAt    DateTime @default(now())
+  createdById  String?
+  @@unique([tenantId, code])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now())
+}
